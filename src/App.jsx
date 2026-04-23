@@ -511,7 +511,8 @@ const SignInScreen=({nav,onSuccess,t})=>{
       </div>
       <button onClick={submit} style={{width:"100%",padding:16,background:`linear-gradient(135deg,${t.teal},${t.tealDark})`,color:"#fff",border:"none",borderRadius:12,fontSize:16,fontWeight:800,cursor:"pointer",fontFamily:"Nunito,sans-serif",boxShadow:`0 6px 20px ${t.teal}55`}}>Sign In</button>
       <div style={{textAlign:"center",marginTop:20,fontSize:14,color:t.muted}}>
-        Don't have an account? <span onClick={()=>nav("signup")} style={{color:t.teal,fontWeight:800,cursor:"pointer"}}>Sign Up</span>
+        Don't have an account? <span  onClick={()=>window.open("https://energy-switch-platform-5.onrender.com/","_blank")}
+        style={{color:t.teal,fontWeight:800,cursor:"pointer"}}>Sign Up</span>
       </div>
     </div>
   );
@@ -1563,10 +1564,10 @@ const SubscriptionScreen=({nav,toast,t})=>{
       features:[
         "Live electricity price tracking",
         "Daily & weekly price charts",
-        "Up to 10 alerts",
+        "Up to 10 price alerts",
         "Basic device monitoring (4 devices)",
         "Monthly bill summary",
-        "CRM Support",
+        "CRM support",
       ],
       missing:[
         "Unlimited alerts",
@@ -2964,3 +2965,15 @@ export default function App(){
     </>
   );
 }
+
+// user message  - > extract the keywords - > match against intents - > generate response based on intent and live data
+
+// if (q.match(/now|current|live/))        → returns live price from SEM data
+// else if (q.match(/cheap|low|best/))     → returns cheapest hour
+// else if (q.match(/peak|expensive/))     → returns peak hour
+// else if (q.match(/bill|forecast/))      → returns €148.20 forecast
+// else if (q.match(/ev|charge/))          → returns EV charging tip
+// else if (q.match(/alert.*below/))       → creates a price-below alert
+// else if (q.match(/alert.*above/))       → creates a price-above alert
+// ...
+// else → generic fallback message
