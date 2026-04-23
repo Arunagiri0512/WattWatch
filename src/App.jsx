@@ -466,9 +466,7 @@ const SplashScreen=({nav,t})=>(
   </div>
 );
 
-// hack to suppress warning
 
-// ─── AUTH INPUT ────────────────────────────────────────────────
 const AuthInput=({label,type,placeholder,value,onChange,error,t,icon,right})=>(
   <div style={{display:"flex",flexDirection:"column",gap:6,marginBottom:14}}>
     <label style={{fontSize:11,fontWeight:700,color:t.muted,textTransform:"uppercase",letterSpacing:".5px"}}>{label}</label>
@@ -484,7 +482,6 @@ const AuthInput=({label,type,placeholder,value,onChange,error,t,icon,right})=>(
   </div>
 );
 
-// ─── SIGN IN ────────────────────────────────────────────────────
 const SignInScreen=({nav,onSuccess,t})=>{
   const [email,setEmail]=useState("");
   const [pw,setPw]=useState("");
@@ -520,7 +517,6 @@ const SignInScreen=({nav,onSuccess,t})=>{
   );
 };
 
-// ─── SIGN UP ────────────────────────────────────────────────────
 const SignUpScreen=({nav,onSuccess,t})=>{
   const [name,setName]=useState("");
   const [email,setEmail]=useState("");
@@ -562,7 +558,6 @@ const SignUpScreen=({nav,onSuccess,t})=>{
   );
 };
 
-// ─── LOADING ────────────────────────────────────────────────────
 const LoadingScreen=({t})=>{
   const [pct,setPct]=useState(0);
   const [msg,setMsg]=useState("Connecting to WattWatch…");
@@ -590,7 +585,6 @@ const LoadingScreen=({t})=>{
   );
 };
 
-// ─── HOME ────────────────────────────────────────────────────────
 const HomeScreen=({nav,toast,t,openCal})=>{
   const curH=new Date().getHours();
   const curSlotIdx=curH*2;
@@ -598,8 +592,6 @@ const HomeScreen=({nav,toast,t,openCal})=>{
   const maxP=Math.max(...liveHalfHourly.map(d=>d.r));
   const scrollRef=useRef(null);
 
-  // Live price cycles through Low → Moderate → High every 10s to demo all states
-  // Each tier picks a random price within its range
   const PRICE_TIERS=[
     {min:0.155,max:0.200,label:"🟢 Very Low",  col:"#4ade80",glow:"rgba(34,197,94,.6)", ring:"rgba(34,197,94,.3)", bg:"linear-gradient(145deg,#052e16,#14532d,#052e16)"},
     {min:0.210,max:0.270,label:"🟡 Moderate",  col:"#fbbf24",glow:"rgba(251,191,36,.6)", ring:"rgba(251,191,36,.3)", bg:"linear-gradient(145deg,#1c1003,#3b2200,#1c1003)"},
@@ -612,7 +604,7 @@ const HomeScreen=({nav,toast,t,openCal})=>{
 
   useEffect(()=>{
     const tick=setInterval(()=>{
-      // Brief fade out, switch tier & price, fade back in
+  
       setFading(true);
       setTimeout(()=>{
         setTierIdx(prev=>{
@@ -748,10 +740,9 @@ const HomeScreen=({nav,toast,t,openCal})=>{
 };
 
 // ─── ANALYTICS ─────────────────────────────────────────────────
-// ─── WATT CHART (unified area chart matching the screenshot style) ─
+
 const WattChart=({d,t,tab})=>{
   const chartData=d.labels.map((l,i)=>({name:l,value:d.data[i]}));
-  // For yearly/monthly with many points, show ticks every N items
   const interval = tab==="yearly"?3 : tab==="daily"?3 : 0;
   const margin = tab==="yearly"
     ? {top:16,right:10,left:4,bottom:0}
@@ -1535,6 +1526,8 @@ const ProfileScreen=({nav,toast,t,openCal,alerts,setAlertSheet})=>(
           icon={{bg:"#fff7ed",el:<CardIco c={t.orange}/>}} label="Billing" sub="Payments · Invoices"/>
         <MenuItem t={t} onClick={()=>nav("tickets")}
           icon={{bg:"#f0fdf4",el:<svg viewBox="0 0 24 24" width={22} height={22} fill="none" stroke="#16a34a" strokeWidth={2}><path d="M15 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V9z"/><polyline points="15 3 15 9 21 9"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="12" y2="17"/></svg>}} label="My Tickets" sub="Support queries & CRM replies"/>
+        <MenuItem t={t} onClick={()=>nav("subscription")}
+          icon={{bg:"#fdf4ff",el:<svg viewBox="0 0 24 24" width={22} height={22} fill="none" stroke="#a855f7" strokeWidth={2}><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>}} label="Subscription" sub="Premium · €14.99/month" badge="Premium"/>
         <MenuItem t={t} onClick={()=>{const m=document.getElementById('dl-menu-overlay');if(m)m.style.display='flex';}} accent
           icon={{bg:t.tealLight,el:<DlIco c={t.teal}/>}} label="Download Data" sub="PDF · Excel · Raw JSON"/>
         <MenuItem t={t} onClick={()=>toast("🔔 Opening notifications…")}
@@ -1552,124 +1545,443 @@ const ProfileScreen=({nav,toast,t,openCal,alerts,setAlertSheet})=>(
   </div>
 );
 
+// ─── SUBSCRIPTION SCREEN ───────────────────────────────────────
+const SubscriptionScreen=({nav,toast,t})=>{
+  const [selected,setSelected]=useState("premium");
+  const [confirmPlan,setConfirmPlan]=useState(null);
+
+  const plans=[
+    {
+      id:"standard",
+      name:"Standard",
+      price:"€9.99",
+      period:"/month",
+      badge:null,
+      color:"#6366f1",
+      colorLight:"#eef2ff",
+      icon:"⚡",
+      features:[
+        "Live electricity price tracking",
+        "Daily & weekly price charts",
+        "Up to 3 price alerts",
+        "Basic device monitoring (2 devices)",
+        "Monthly bill summary",
+        "Email support",
+      ],
+      missing:[
+        "Unlimited alerts",
+        "Advanced analytics",
+        "EV charging optimiser",
+        "PDF/Excel data export",
+        "Priority CRM support",
+      ],
+    },
+    {
+      id:"premium",
+      name:"Premium",
+      price:"€14.99",
+      period:"/month",
+      badge:"Your Plan",
+      color:"#3ecfb2",
+      colorLight:"#e8faf7",
+      icon:"👑",
+      features:[
+        "Everything in Standard",
+        "Unlimited price & time alerts",
+        "Full analytics (daily/weekly/monthly/yearly)",
+        "All devices monitored (unlimited)",
+        "EV charging optimiser",
+        "PDF & Excel data export",
+        "AI energy assistant (WattWatch AI)",
+        "Priority CRM support (2–4 hr response)",
+      ],
+      missing:[],
+    },
+  ];
+
+  const handleSwitch=(planId)=>{
+    if(planId==="premium") { toast("✅ You're already on Premium!"); return; }
+    setConfirmPlan(planId);
+  };
+
+  return(
+    <div style={{flex:1,display:"flex",flexDirection:"column",overflow:"hidden"}}>
+      <TopBar t={t} title="Subscription" onBack={()=>nav("profile")}/>
+      <div style={{flex:1,overflowY:"auto",padding:"16px 20px 40px"}}>
+
+        {/* Hero Banner */}
+        <div style={{background:`linear-gradient(135deg,${t.teal},${t.tealDark})`,borderRadius:20,padding:"18px 20px",marginBottom:20,boxShadow:`0 8px 24px ${t.teal}55`}}>
+          <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:8}}>
+            <div style={{fontSize:28}}>👑</div>
+            <div>
+              <div style={{fontSize:16,fontWeight:800,color:"#fff"}}>You're on Premium</div>
+              <div style={{fontSize:12,color:"rgba(255,255,255,.8)",marginTop:2}}>Next billing: 25 Apr 2026 · €14.99</div>
+            </div>
+          </div>
+          <div style={{background:"rgba(255,255,255,.15)",borderRadius:12,padding:"8px 14px",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+            <span style={{fontSize:12,color:"rgba(255,255,255,.9)",fontWeight:600}}>Account: WW-2026-00847</span>
+            <span style={{fontSize:11,color:"rgba(255,255,255,.75)"}}>Active ✓</span>
+          </div>
+        </div>
+
+        {/* Plan Cards */}
+        <div style={{fontSize:13,fontWeight:700,color:t.muted,marginBottom:12,textTransform:"uppercase",letterSpacing:".5px"}}>Choose a Plan</div>
+        <div style={{display:"flex",flexDirection:"column",gap:14}}>
+          {plans.map(plan=>{
+            const isCurrent=plan.id==="premium";
+            const isSelected=selected===plan.id;
+            return(
+              <div key={plan.id}
+                onClick={()=>setSelected(plan.id)}
+                style={{
+                  background:t.card,
+                  borderRadius:20,
+                  border:`2.5px solid ${isSelected?plan.color:t.border}`,
+                  overflow:"hidden",
+                  cursor:"pointer",
+                  boxShadow:isSelected?`0 6px 24px ${plan.color}33`:t.shadow,
+                  transition:"all .2s",
+                }}>
+                {/* Card Header */}
+                <div style={{background:isSelected?`linear-gradient(135deg,${plan.color}18,${plan.color}08)`:t.bg,padding:"16px 18px 14px",borderBottom:`1px solid ${t.border}`}}>
+                  <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:6}}>
+                    <div style={{display:"flex",alignItems:"center",gap:10}}>
+                      <div style={{width:38,height:38,borderRadius:12,background:isSelected?plan.colorLight:t.bg,display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,border:`1.5px solid ${isSelected?plan.color:t.border}`}}>
+                        {plan.icon}
+                      </div>
+                      <div>
+                        <div style={{fontSize:16,fontWeight:800,color:t.text}}>{plan.name}</div>
+                        {plan.badge&&(
+                          <div style={{display:"inline-block",background:plan.color,color:"#fff",fontSize:10,fontWeight:700,padding:"2px 8px",borderRadius:20,marginTop:2}}>
+                            {plan.badge}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    <div style={{textAlign:"right"}}>
+                      <div style={{fontSize:24,fontWeight:800,color:isSelected?plan.color:t.text,lineHeight:1}}>{plan.price}</div>
+                      <div style={{fontSize:11,color:t.muted,marginTop:2}}>{plan.period}</div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Features List */}
+                <div style={{padding:"14px 18px"}}>
+                  {plan.features.map((f,i)=>(
+                    <div key={i} style={{display:"flex",alignItems:"flex-start",gap:8,marginBottom:8}}>
+                      <div style={{width:18,height:18,borderRadius:"50%",background:plan.colorLight,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,marginTop:1}}>
+                        <svg viewBox="0 0 24 24" width={11} height={11} fill="none" stroke={plan.color} strokeWidth={3} strokeLinecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+                      </div>
+                      <span style={{fontSize:12,color:t.text,fontWeight:500,lineHeight:1.5}}>{f}</span>
+                    </div>
+                  ))}
+                  {plan.missing.map((f,i)=>(
+                    <div key={i} style={{display:"flex",alignItems:"flex-start",gap:8,marginBottom:8,opacity:.45}}>
+                      <div style={{width:18,height:18,borderRadius:"50%",background:t.bg,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,marginTop:1,border:`1px solid ${t.border}`}}>
+                        <svg viewBox="0 0 24 24" width={10} height={10} fill="none" stroke={t.muted} strokeWidth={2.5} strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                      </div>
+                      <span style={{fontSize:12,color:t.muted,lineHeight:1.5}}>{f}</span>
+                    </div>
+                  ))}
+
+                  {/* CTA Button */}
+                  <button
+                    onClick={e=>{e.stopPropagation();handleSwitch(plan.id);}}
+                    style={{
+                      width:"100%",marginTop:8,padding:"12px 0",
+                      background:isCurrent?`linear-gradient(135deg,${plan.color},${t.tealDark})`:`${t.border}`,
+                      color:isCurrent?"#fff":t.muted,
+                      border:"none",borderRadius:12,fontSize:13,fontWeight:800,
+                      fontFamily:"Nunito,sans-serif",cursor:isCurrent?"default":"pointer",
+                      boxShadow:isCurrent?`0 4px 16px ${plan.color}44`:"none",
+                      transition:"all .2s",
+                    }}>
+                    {isCurrent?"✓ Current Plan":"Switch to Standard"}
+                  </button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Footer note */}
+        <div style={{marginTop:20,padding:"14px 16px",background:t.card,borderRadius:14,border:`1px solid ${t.border}`}}>
+          <div style={{fontSize:12,color:t.muted,lineHeight:1.7,textAlign:"center"}}>
+            🔒 Billing is managed securely via <span style={{fontWeight:700,color:t.text}}>Stripe</span>.<br/>
+            Cancel or change plan anytime. No hidden fees.<br/>
+            <span style={{color:t.teal,fontWeight:700}}>support@wattwatch.ie</span> for billing queries.
+          </div>
+        </div>
+      </div>
+
+      {/* Downgrade Confirm Modal */}
+      {confirmPlan&&(
+        <div style={{position:"absolute",inset:0,background:"rgba(0,0,0,.55)",display:"flex",alignItems:"flex-end",zIndex:300}}>
+          <div style={{width:"100%",background:t.card,borderRadius:"24px 24px 0 0",padding:"24px 24px 36px",animation:"slideUp .22s ease"}}>
+            <div style={{fontSize:18,fontWeight:800,color:t.text,marginBottom:8}}>Switch to Standard?</div>
+            <div style={{fontSize:13,color:t.muted,lineHeight:1.6,marginBottom:20}}>
+              You'll lose access to Unlimited Alerts, AI Assistant, EV Optimiser, and Priority Support at the end of your current billing period (25 Apr 2026).
+            </div>
+            <button onClick={()=>{setConfirmPlan(null);toast("ℹ️ Stayed on Premium — no changes made");}}
+              style={{width:"100%",padding:14,background:`linear-gradient(135deg,${t.teal},${t.tealDark})`,color:"#fff",border:"none",borderRadius:14,fontSize:14,fontWeight:800,fontFamily:"Nunito,sans-serif",cursor:"pointer",marginBottom:10}}>
+              Keep Premium
+            </button>
+            <button onClick={()=>{setConfirmPlan(null);toast("✅ Plan switched to Standard from next billing date");}}
+              style={{width:"100%",padding:13,background:"transparent",color:t.muted,border:`2px solid ${t.border}`,borderRadius:14,fontSize:14,fontWeight:700,fontFamily:"Nunito,sans-serif",cursor:"pointer"}}>
+              Confirm Switch to Standard
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
 // ─── TICKETS SCREEN ────────────────────────────────────────────
-const TICKET_CATS=["Billing Query","High Bill","Meter Issue","Switching Help","Account Access","Technical Issue","Other"];
-const CRM_REPLIES=[
-  "Thank you for contacting WattWatch support. We've received your query and a member of our team will review it shortly.",
-  "We've looked into this for you. Could you please confirm your MPRN so we can pull up the exact meter data?",
-  "This has been escalated to our billing team. You can expect a resolution within 2 working days.",
-  "Great news — we've identified the issue and applied a correction to your account. Your next bill will reflect the adjustment.",
-  "We're sorry for the inconvenience. Our engineers are aware of the issue and it should be resolved within 24 hours.",
-];
-const MOCK_TICKETS=[
-  {id:"TKT-2026-008",cat:"High Bill",subject:"March bill seems higher than usual",status:"Open",created:"20 Mar 2026",
-   messages:[
-     {from:"user",text:"My March bill is showing €148.20 which is higher than February's €38.74. Can you check this?",time:"20 Mar, 09:14"},
-     {from:"crm",text:"Thank you for reaching out, Jey. We can see your account details. The increase is due to higher daily usage from 8th–18th March — particularly 18:00–20:00 peak hours. Would you like us to send a detailed breakdown?",time:"20 Mar, 11:32"},
-     {from:"user",text:"Yes please, that would be helpful.",time:"20 Mar, 14:05"},
-     {from:"crm",text:"We've emailed a full hourly usage breakdown to jey@wattwatch.ie. Please allow 10 minutes for delivery. Let us know if you have further questions.",time:"20 Mar, 14:28"},
-   ]},
-  {id:"TKT-2026-005",cat:"Meter Issue",subject:"Smart meter not syncing data",status:"Resolved",created:"12 Mar 2026",
-   messages:[
-     {from:"user",text:"My smart meter hasn't updated since 10th March. Readings are stuck.",time:"12 Mar, 10:44"},
-     {from:"crm",text:"Hi Jey, we can see the meter went offline on 10 Mar at 22:47. We've sent a re-sync command. Can you confirm your meter display shows a green light?",time:"12 Mar, 12:01"},
-     {from:"user",text:"Yes, it's green now and data is showing again. Thank you!",time:"12 Mar, 14:30"},
-     {from:"crm",text:"Glad it's resolved! We've marked this ticket as resolved. Don't hesitate to reach out if it happens again.",time:"12 Mar, 15:05"},
-   ]},
-];
+// ─── FIREBASE CONFIG ───────────────────────────────────────────
+// Replace with your actual Firebase project config from console.firebase.google.com
+// Project Settings → Your apps → SDK setup → Config
+const FIREBASE_CONFIG = {
+  apiKey:            "AIzaSyCP9ExQfxdjxg4hmV8FVTgFNPjjSFAPJ28",
+  authDomain:        "watt-watch-160c8.firebaseapp.com",
+  projectId:         "att-watch-160c8",
+  storageBucket:     "watt-watch-160c8.firebasestorage.app",
+  messagingSenderId: "230459512289",
+  appId:             "1:230459512289:web:f15936a86b570cb41e6ea0",
+};
 
-const TicketsScreen=({nav,toast,t})=>{
-  const [tickets,setTickets]=useState(MOCK_TICKETS);
-  const [view,setView]=useState("list"); // "list" | "detail" | "create"
-  const [activeTicket,setActiveTicket]=useState(null);
-  const [replyText,setReplyText]=useState("");
-  const [newSubject,setNewSubject]=useState("");
-  const [newCat,setNewCat]=useState(TICKET_CATS[0]);
-  const [newMsg,setNewMsg]=useState("");
-  const [tab,setTab]=useState("all"); // "all" | "open" | "resolved"
-  const msgEndRef=useRef(null);
-  useEffect(()=>{if(msgEndRef.current)msgEndRef.current.scrollIntoView({behavior:"smooth"});},[activeTicket]);
+// ── Firestore REST helpers (no SDK needed — works in any browser) ──
+const FS_BASE = `https://firestore.googleapis.com/v1/projects/${FIREBASE_CONFIG.projectId}/databases/(default)/documents`;
 
-  const statusColor=s=>s==="Open"?"#f97316":s==="Resolved"?"#16a34a":"#6b7280";
-  const statusBg=s=>s==="Open"?"#fff7ed":s==="Resolved"?"#dcfce7":"#f3f4f6";
+// Convert Firestore document fields → plain JS object
+function fsDocToObj(doc) {
+  if (!doc || !doc.fields) return null;
+  const obj = { _fsId: doc.name?.split("/").pop() };
+  for (const [k, v] of Object.entries(doc.fields)) {
+    if (v.stringValue  !== undefined) obj[k] = v.stringValue;
+    else if (v.integerValue !== undefined) obj[k] = parseInt(v.integerValue);
+    else if (v.booleanValue !== undefined) obj[k] = v.booleanValue;
+    else if (v.arrayValue  !== undefined) {
+      obj[k] = (v.arrayValue.values || []).map(item => {
+        if (item.mapValue) return fsDocToObj({ fields: item.mapValue.fields });
+        if (item.stringValue !== undefined) return item.stringValue;
+        return null;
+      });
+    } else if (v.mapValue !== undefined) {
+      obj[k] = fsDocToObj({ fields: v.mapValue.fields });
+    }
+  }
+  return obj;
+}
 
-  const sendReply=()=>{
-    if(!replyText.trim()) return;
-    const updated=tickets.map(tk=>{
-      if(tk.id!==activeTicket.id) return tk;
-      const now=new Date();
-      const timeStr=`${now.getDate()} Mar, ${String(now.getHours()).padStart(2,"0")}:${String(now.getMinutes()).padStart(2,"0")}`;
-      const newMsgs=[...tk.messages,{from:"user",text:replyText.trim(),time:timeStr}];
-      // Simulate CRM auto-reply after 1.5s
-      setTimeout(()=>{
-        const crmReply=CRM_REPLIES[Math.floor(Math.random()*CRM_REPLIES.length)];
-        const crmTime=new Date();
-        const ct=`${crmTime.getDate()} Mar, ${String(crmTime.getHours()).padStart(2,"0")}:${String(crmTime.getMinutes()).padStart(2,"0")}`;
-        setTickets(prev=>prev.map(x=>x.id===tk.id?{...x,messages:[...x.messages,{from:"user",text:replyText.trim(),time:timeStr},{from:"crm",text:crmReply,time:ct}]}:x));
-        setActiveTicket(prev=>prev?{...prev,messages:[...prev.messages,{from:"user",text:replyText.trim(),time:timeStr},{from:"crm",text:crmReply,time:ct}]}:prev);
-      },1500);
-      return {...tk,messages:newMsgs};
+// Convert plain JS value → Firestore field value
+function toFsValue(val) {
+  if (typeof val === "string")  return { stringValue: val };
+  if (typeof val === "number")  return { integerValue: String(val) };
+  if (typeof val === "boolean") return { booleanValue: val };
+  if (Array.isArray(val))       return { arrayValue: { values: val.map(toFsValue) } };
+  if (val && typeof val === "object") {
+    const fields = {};
+    for (const [k, v] of Object.entries(val)) fields[k] = toFsValue(v);
+    return { mapValue: { fields } };
+  }
+  return { nullValue: null };
+}
+
+// Convert plain JS object → Firestore fields map
+function objToFsFields(obj) {
+  const fields = {};
+  for (const [k, v] of Object.entries(obj)) {
+    if (k === "_fsId") continue;
+    fields[k] = toFsValue(v);
+  }
+  return fields;
+}
+
+// GET all tickets for this user
+async function fetchTickets(userEmail) {
+  try {
+    const url = `${FS_BASE}/tickets?pageSize=50`;
+    const res = await fetch(url);
+    const data = await res.json();
+    if (!data.documents) return [];
+    return data.documents
+      .map(fsDocToObj)
+      .filter(t => t.userEmail === userEmail)
+      .sort((a, b) => (b.createdAt || "").localeCompare(a.createdAt || ""));
+  } catch (e) {
+    console.error("fetchTickets:", e);
+    return [];
+  }
+}
+
+// CREATE a new ticket document in Firestore
+async function createFirestoreTicket(ticket) {
+  try {
+    const url = `${FS_BASE}/tickets`;
+    const body = { fields: objToFsFields(ticket) };
+    const res = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
     });
-    setTickets(updated);
-    setActiveTicket(updated.find(x=>x.id===activeTicket.id));
+    const doc = await res.json();
+    return fsDocToObj(doc);
+  } catch (e) {
+    console.error("createFirestoreTicket:", e);
+    return null;
+  }
+}
+
+// UPDATE ticket (add reply message) via PATCH
+async function updateTicketMessages(fsId, messages) {
+  try {
+    const url = `${FS_BASE}/tickets/${fsId}?updateMask.fieldPaths=messages`;
+    const body = { fields: { messages: toFsValue(messages) } };
+    await fetch(url, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+  } catch (e) {
+    console.error("updateTicketMessages:", e);
+  }
+}
+
+// UPDATE ticket status
+async function updateTicketStatus(fsId, status) {
+  try {
+    const url = `${FS_BASE}/tickets/${fsId}?updateMask.fieldPaths=status`;
+    const body = { fields: { status: toFsValue(status) } };
+    await fetch(url, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+  } catch (e) {
+    console.error("updateTicketStatus:", e);
+  }
+}
+
+// ─── TICKETS SCREEN ────────────────────────────────────────────
+const TICKET_CATS = ["Billing Query","High Bill","Meter Issue","Switching Help","Account Access","Technical Issue","Other"];
+
+const TicketsScreen = ({ nav, toast, t }) => {
+  const [tickets, setTickets]       = useState([]);
+  const [loading, setLoading]       = useState(true);
+  const [view, setView]             = useState("list"); // list | detail | create
+  const [activeTicket, setActiveTicket] = useState(null);
+  const [replyText, setReplyText]   = useState("");
+  const [newSubject, setNewSubject] = useState("");
+  const [newCat, setNewCat]         = useState(TICKET_CATS[0]);
+  const [newMsg, setNewMsg]         = useState("");
+  const [tab, setTab]               = useState("all");
+  const [submitting, setSubmitting] = useState(false);
+  const msgEndRef = useRef(null);
+
+  // ── Load tickets from Firestore on mount ──
+  useEffect(() => {
+    loadTickets();
+  }, []);
+
+  useEffect(() => {
+    if (msgEndRef.current) msgEndRef.current.scrollIntoView({ behavior: "smooth" });
+  }, [activeTicket]);
+
+  const loadTickets = async () => {
+    setLoading(true);
+    const data = await fetchTickets("jey@wattwatch.ie");
+    // If Firestore returns nothing yet (first run), show nothing — no mocks
+    setTickets(data);
+    setLoading(false);
+  };
+
+  const statusColor = s => s === "Open" ? "#f97316" : s === "Resolved" ? "#16a34a" : "#6b7280";
+  const statusBg    = s => s === "Open" ? "#fff7ed" : s === "Resolved" ? "#dcfce7"  : "#f3f4f6";
+
+  // ── Send a reply ──
+  const sendReply = async () => {
+    if (!replyText.trim() || !activeTicket) return;
+    const now = new Date();
+    const timeStr = `${now.getDate()} Mar, ${String(now.getHours()).padStart(2,"0")}:${String(now.getMinutes()).padStart(2,"0")}`;
+    const newMessages = [...(activeTicket.messages || []), { from: "user", text: replyText.trim(), time: timeStr }];
+
+    // Optimistic UI update
+    const updated = { ...activeTicket, messages: newMessages };
+    setActiveTicket(updated);
+    setTickets(prev => prev.map(x => x._fsId === activeTicket._fsId ? updated : x));
     setReplyText("");
+
+    // Persist to Firestore
+    if (activeTicket._fsId) {
+      await updateTicketMessages(activeTicket._fsId, newMessages);
+    }
     toast("✉️ Reply sent — CRM team will respond shortly");
   };
 
-  const createTicket=()=>{
-    if(!newSubject.trim()||!newMsg.trim()){toast("⚠️ Fill in all fields");return;}
-    const id=`TKT-2026-${String(tickets.length+10).padStart(3,"0")}`;
-    const now=new Date();
-    const timeStr=`${now.getDate()} Mar, ${String(now.getHours()).padStart(2,"0")}:${String(now.getMinutes()).padStart(2,"0")}`;
-    const newTicket={
-      id,cat:newCat,subject:newSubject.trim(),status:"Open",
-      created:`${now.getDate()} Mar 2026`,
-      messages:[
-        {from:"user",text:newMsg.trim(),time:timeStr},
-      ]
+  // ── Create new ticket ──
+  const createTicket = async () => {
+    if (!newSubject.trim() || !newMsg.trim()) { toast("⚠️ Fill in all fields"); return; }
+    setSubmitting(true);
+    const now = new Date();
+    const timeStr = `${now.getDate()} Mar, ${String(now.getHours()).padStart(2,"0")}:${String(now.getMinutes()).padStart(2,"0")}`;
+    const ticketId = `TKT-${Date.now()}`;
+
+    const payload = {
+      id:          ticketId,
+      cat:         newCat,
+      subject:     newSubject.trim(),
+      status:      "Open",
+      created:     `${now.getDate()} Mar 2026`,
+      createdAt:   now.toISOString(),
+      userEmail:   "jey@wattwatch.ie",
+      userName:    "Jey",
+      accountNo:   "WW-2026-00847",
+      messages:    [{ from: "user", text: newMsg.trim(), time: timeStr }],
     };
-    setTickets(p=>[newTicket,...p]);
-    // Auto CRM ack after 2s
-    setTimeout(()=>{
-      const ct=new Date();
-      const ts=`${ct.getDate()} Mar, ${String(ct.getHours()).padStart(2,"0")}:${String(ct.getMinutes()).padStart(2,"0")}`;
-      setTickets(prev=>prev.map(x=>x.id===id?{...x,messages:[...x.messages,{from:"crm",text:CRM_REPLIES[0],time:ts}]}:x));
-    },2000);
-    toast("✅ Ticket raised — we'll respond shortly");
-    setNewSubject("");setNewMsg("");setNewCat(TICKET_CATS[0]);
+
+    const saved = await createFirestoreTicket(payload);
+    const newTicket = saved || { ...payload, _fsId: ticketId };
+    setTickets(prev => [newTicket, ...prev]);
+    setSubmitting(false);
+    toast("✅ Ticket raised — CRM team will see it immediately");
+    setNewSubject(""); setNewMsg(""); setNewCat(TICKET_CATS[0]);
     setView("list");
   };
 
-  const IS={width:"100%",padding:"12px 14px",border:`2px solid ${t.border}`,borderRadius:10,fontSize:14,fontFamily:"Nunito,sans-serif",color:t.text,background:t.inputBg,outline:"none"};
+  const IS = { width:"100%",padding:"12px 14px",border:`2px solid ${t.border}`,borderRadius:10,fontSize:14,fontFamily:"Nunito,sans-serif",color:t.text,background:t.inputBg,outline:"none" };
 
   // ── LIST VIEW ──
-  if(view==="list"){
-    const shown=tickets.filter(tk=>tab==="all"||tk.status.toLowerCase()===tab);
-    return(
+  if (view === "list") {
+    const shown = tickets.filter(tk => tab === "all" || tk.status?.toLowerCase() === tab);
+    return (
       <div style={{flex:1,display:"flex",flexDirection:"column",overflow:"hidden"}}>
         <TopBar t={t} title="My Tickets" onBack={()=>nav("profile")}/>
-        {/* Tabs */}
         <div style={{display:"flex",borderBottom:`2px solid ${t.border}`,padding:"0 20px",flexShrink:0}}>
           {[["all","All"],["open","Open"],["resolved","Resolved"]].map(([k,l])=>(
             <button key={k} onClick={()=>setTab(k)}
               style={{flex:1,padding:"12px 0",fontSize:13,fontWeight:700,fontFamily:"Nunito,sans-serif",border:"none",background:"none",
-                color:tab===k?t.teal:t.muted,borderBottom:`2.5px solid ${tab===k?t.teal:"transparent"}`,cursor:"pointer",transition:"all .2s"}}>
-              {l} {k!=="all"&&<span style={{fontSize:10,background:tab===k?t.tealLight:"transparent",color:tab===k?t.teal:t.muted,padding:"1px 5px",borderRadius:8,marginLeft:3}}>{tickets.filter(x=>x.status.toLowerCase()===k).length}</span>}
+                color:tab===k?t.teal:t.muted,borderBottom:`2.5px solid ${tab===k?t.teal:"transparent"}`,cursor:"pointer"}}>
+              {l}
             </button>
           ))}
         </div>
         <div style={{flex:1,overflowY:"auto",padding:"12px 20px",paddingBottom:94}}>
-          {shown.length===0&&(
+          {loading ? (
+            <div style={{display:"flex",flexDirection:"column",alignItems:"center",padding:"48px 20px",gap:12}}>
+              <div style={{width:32,height:32,borderRadius:"50%",border:`3px solid ${t.tealLight}`,borderTopColor:t.teal,animation:"spin .8s linear infinite"}}/>
+              <div style={{fontSize:13,color:t.muted}}>Loading tickets from CRM…</div>
+            </div>
+          ) : shown.length === 0 ? (
             <div style={{textAlign:"center",padding:"48px 20px",color:t.muted}}>
               <div style={{fontSize:40,marginBottom:12}}>🎫</div>
               <div style={{fontSize:16,fontWeight:700,color:t.text}}>No tickets yet</div>
-              <div style={{fontSize:13,marginTop:6}}>Tap the button below to raise a support query</div>
+              <div style={{fontSize:13,marginTop:6}}>Tap below to raise your first support query</div>
             </div>
-          )}
-          {shown.map(tk=>(
-            <div key={tk.id} onClick={()=>{setActiveTicket(tk);setView("detail");}}
-              style={{background:t.card,borderRadius:16,padding:"14px 16px",marginBottom:12,boxShadow:t.shadow,cursor:"pointer",
-                borderLeft:`4px solid ${statusColor(tk.status)}`,transition:"transform .15s"}}
+          ) : shown.map(tk => (
+            <div key={tk._fsId || tk.id} onClick={()=>{setActiveTicket(tk);setView("detail");}}
+              style={{background:t.card,borderRadius:16,padding:"14px 16px",marginBottom:12,boxShadow:t.shadow,
+                cursor:"pointer",borderLeft:`4px solid ${statusColor(tk.status)}`,transition:"transform .15s"}}
               onMouseEnter={e=>e.currentTarget.style.transform="translateX(3px)"}
               onMouseLeave={e=>e.currentTarget.style.transform="none"}>
               <div style={{display:"flex",alignItems:"flex-start",justifyContent:"space-between",marginBottom:6}}>
@@ -1681,8 +1993,8 @@ const TicketsScreen=({nav,toast,t})=>{
               </div>
               <div style={{fontSize:12,color:t.muted,display:"flex",alignItems:"center",gap:6}}>
                 <svg viewBox="0 0 24 24" width={13} height={13} fill="none" stroke={t.muted} strokeWidth={2}><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-                {tk.messages.length} message{tk.messages.length!==1?"s":""}
-                {tk.messages[tk.messages.length-1]?.from==="crm"&&<span style={{color:t.teal,fontWeight:700,marginLeft:4}}>· CRM replied</span>}
+                {(tk.messages||[]).length} message{(tk.messages||[]).length !== 1 ? "s" : ""}
+                {(tk.messages||[]).at(-1)?.from === "crm" && <span style={{color:t.teal,fontWeight:700,marginLeft:4}}>· CRM replied</span>}
               </div>
             </div>
           ))}
@@ -1701,23 +2013,19 @@ const TicketsScreen=({nav,toast,t})=>{
   }
 
   // ── DETAIL VIEW ──
-  if(view==="detail"&&activeTicket){
-    const tk=tickets.find(x=>x.id===activeTicket.id)||activeTicket;
-    return(
+  if (view === "detail" && activeTicket) {
+    return (
       <div style={{flex:1,display:"flex",flexDirection:"column",overflow:"hidden"}}>
-        <TopBar t={t} title={tk.id} onBack={()=>setView("list")}/>
-        {/* Ticket meta */}
+        <TopBar t={t} title={activeTicket.id} onBack={()=>setView("list")}/>
         <div style={{padding:"12px 20px",borderBottom:`1px solid ${t.border}`,flexShrink:0,background:t.card}}>
-          <div style={{fontSize:14,fontWeight:800,color:t.text,marginBottom:4}}>{tk.subject}</div>
-          <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}}>
-            <span style={{fontSize:11,fontWeight:700,color:statusColor(tk.status),background:statusBg(tk.status),padding:"3px 9px",borderRadius:20}}>{tk.status}</span>
-            <span style={{fontSize:11,color:t.muted}}>{tk.cat}</span>
-            <span style={{fontSize:11,color:t.muted}}>· {tk.created}</span>
+          <div style={{fontSize:14,fontWeight:800,color:t.text,marginBottom:4}}>{activeTicket.subject}</div>
+          <div style={{display:"flex",alignItems:"center",gap:8}}>
+            <span style={{fontSize:11,fontWeight:700,color:statusColor(activeTicket.status),background:statusBg(activeTicket.status),padding:"3px 9px",borderRadius:20}}>{activeTicket.status}</span>
+            <span style={{fontSize:11,color:t.muted}}>{activeTicket.cat} · {activeTicket.created}</span>
           </div>
         </div>
-        {/* Messages */}
         <div style={{flex:1,overflowY:"auto",padding:"14px 16px",display:"flex",flexDirection:"column",gap:10}}>
-          {tk.messages.map((m,i)=>(
+          {(activeTicket.messages||[]).map((m,i)=>(
             <div key={i} style={{display:"flex",flexDirection:"column",alignItems:m.from==="user"?"flex-end":"flex-start",gap:3}}>
               <div style={{fontSize:10,color:t.muted,fontWeight:600,paddingLeft:m.from==="crm"?4:0,paddingRight:m.from==="user"?4:0}}>
                 {m.from==="crm"?"🎧 WattWatch CRM":"👤 You"} · {m.time}
@@ -1733,27 +2041,26 @@ const TicketsScreen=({nav,toast,t})=>{
           ))}
           <div ref={msgEndRef}/>
         </div>
-        {/* Reply box */}
-        {tk.status==="Open"?(
+        {activeTicket.status === "Open" ? (
           <div style={{padding:"10px 16px 20px",borderTop:`1px solid ${t.border}`,background:t.card,flexShrink:0}}>
-            <div style={{fontSize:11,fontWeight:700,color:t.muted,textTransform:"uppercase",letterSpacing:".4px",marginBottom:6}}>Your Reply</div>
             <textarea value={replyText} onChange={e=>setReplyText(e.target.value)}
               placeholder="Type your reply…"
               style={{...IS,resize:"none",height:72,marginBottom:8,fontSize:13}}/>
             <button onClick={sendReply} disabled={!replyText.trim()}
               style={{width:"100%",padding:12,background:replyText.trim()?`linear-gradient(135deg,${t.teal},${t.tealDark})`:t.border,
                 color:"#fff",border:"none",borderRadius:12,fontSize:14,fontWeight:800,
-                fontFamily:"Nunito,sans-serif",cursor:replyText.trim()?"pointer":"default",
-                boxShadow:replyText.trim()?`0 4px 14px ${t.teal}55`:"none",transition:"all .2s"}}>
+                fontFamily:"Nunito,sans-serif",cursor:replyText.trim()?"pointer":"default",transition:"all .2s"}}>
               Send Reply
             </button>
           </div>
-        ):(
+        ) : (
           <div style={{padding:"14px 20px",borderTop:`1px solid ${t.border}`,background:t.bg,textAlign:"center",flexShrink:0}}>
             <span style={{fontSize:13,color:t.muted}}>This ticket is resolved. </span>
-            <span onClick={()=>{
-              const reopened=tickets.map(x=>x.id===tk.id?{...x,status:"Open"}:x);
-              setTickets(reopened);setActiveTicket({...tk,status:"Open"});
+            <span onClick={async()=>{
+              const updated={...activeTicket,status:"Open"};
+              setActiveTicket(updated);
+              setTickets(prev=>prev.map(x=>x._fsId===activeTicket._fsId?updated:x));
+              if(activeTicket._fsId) await updateTicketStatus(activeTicket._fsId,"Open");
               toast("🔓 Ticket reopened");
             }} style={{fontSize:13,color:t.teal,fontWeight:700,cursor:"pointer"}}>Reopen?</span>
           </div>
@@ -1763,7 +2070,7 @@ const TicketsScreen=({nav,toast,t})=>{
   }
 
   // ── CREATE VIEW ──
-  return(
+  return (
     <div style={{flex:1,display:"flex",flexDirection:"column",overflow:"hidden"}}>
       <TopBar t={t} title="New Ticket" onBack={()=>setView("list")}/>
       <div style={{flex:1,overflowY:"auto",padding:"16px 20px 40px"}}>
@@ -1772,6 +2079,7 @@ const TicketsScreen=({nav,toast,t})=>{
           <div>
             <div style={{fontSize:13,fontWeight:800,color:t.text}}>WattWatch Support</div>
             <div style={{fontSize:11,color:t.muted,marginTop:2}}>Avg. response time: 2–4 hours · Mon–Fri 09:00–17:00</div>
+            <div style={{fontSize:10,color:t.teal,marginTop:2,fontWeight:700}}>🔴 Live — tickets go directly to CRM</div>
           </div>
         </div>
         <div style={{marginBottom:16}}>
@@ -1794,11 +2102,11 @@ const TicketsScreen=({nav,toast,t})=>{
             style={{...IS,resize:"none",height:120}}
             onFocus={e=>e.target.style.borderColor=t.teal} onBlur={e=>e.target.style.borderColor=t.border}/>
         </div>
-        <button onClick={createTicket}
-          style={{width:"100%",padding:15,background:`linear-gradient(135deg,${t.teal},${t.tealDark})`,color:"#fff",border:"none",
-            borderRadius:14,fontSize:15,fontWeight:800,fontFamily:"Nunito,sans-serif",cursor:"pointer",
-            boxShadow:`0 6px 20px ${t.teal}55`}}>
-          Submit Ticket
+        <button onClick={createTicket} disabled={submitting}
+          style={{width:"100%",padding:15,background:submitting?t.border:`linear-gradient(135deg,${t.teal},${t.tealDark})`,color:"#fff",border:"none",
+            borderRadius:14,fontSize:15,fontWeight:800,fontFamily:"Nunito,sans-serif",cursor:submitting?"not-allowed":"pointer",
+            boxShadow:submitting?"none":`0 6px 20px ${t.teal}55`,display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
+          {submitting ? "Submitting…" : "Submit Ticket"}
         </button>
         <div style={{textAlign:"center",marginTop:14,fontSize:12,color:t.muted}}>
           You can also email us at <span style={{color:t.teal,fontWeight:700}}>support@wattwatch.ie</span>
@@ -1807,6 +2115,7 @@ const TicketsScreen=({nav,toast,t})=>{
     </div>
   );
 };
+
 
 // ─── HELP FAQ ACCORDION ────────────────────────────────────────
 const FAQ_DATA=[
@@ -2603,6 +2912,7 @@ export default function App(){
         {screen==="user-details"&&<div style={scr}><StatusBar t={t}/><UserDetailsScreen nav={nav} toast={toast} t={t}/></div>}
         {screen==="billing"&&<div style={scr}><StatusBar t={t}/><BillingScreen nav={nav} toast={toast} t={t}/></div>}
         {screen==="tickets"&&<div style={scr}><StatusBar t={t}/><TicketsScreen nav={nav} toast={toast} t={t}/></div>}
+        {screen==="subscription"&&<div style={scr}><StatusBar t={t}/><SubscriptionScreen nav={nav} toast={toast} t={t}/></div>}
         {showNav&&<BottomNav screen={screen} nav={nav} t={t} openSheet={openSheet}/>}
         {toastMsg&&<Toast msg={toastMsg} t={t}/>}
         <CalendarModal show={calOpen} onClose={()=>setCalOpen(false)} t={t}/>
